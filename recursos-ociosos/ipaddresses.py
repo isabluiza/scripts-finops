@@ -84,9 +84,10 @@ for i in ipResult:
     data = str(i)[1:-1]
     name = i["name"]
     projectId = i["projectId"]
+    region = i["region"]
 
     try:
-        comando3 = f"gcloud compute addresses delete {name} --project={projectId} --quiet"
+        comando3 = f"gcloud compute addresses delete {name} --region={region} --project={projectId} --quiet"
         delete_ip = check_output(shlex.split(comando3),shell=True)
 
         logging.basicConfig(filename = arquivoLOGNome,
