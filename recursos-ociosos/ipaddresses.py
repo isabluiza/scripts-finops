@@ -20,7 +20,7 @@ diasValidos = dataAtual - datetime.timedelta(days=7)
 regraData = diasValidos.strftime("%Y-%m-%dT%H:%M:%S.000-07:00")
 
 #Iniciar nome e formato do arquivo log
-arquivoLOGNome = "deleted-snapshots-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
+arquivoLOGNome = "deleted-ipaddress-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
 log_format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}"
 
 #Colocar a data atual no nome do arquivo csv que será gerado
@@ -38,7 +38,7 @@ for p in parent:
 #Armazenar o ID de cada projeto
         projectId = p["projectId"]
 
-#Listar os discos de cada projeto em formato JSON
+#Listar os endereços de ip de cada projeto em formato JSON
         comando2 = f'gcloud compute addresses list --project={projectId} --format=json'
         ipaddress = json.loads(check_output(shlex.split(comando2),shell=True))
 
@@ -70,6 +70,15 @@ for v in value:
 #Endereços de IP validados para exclusão são concatenados
         ipResult.append(ipDelete)
 
+#Passar todos os endereços de ip a serem excluídos para um arquivo .csv
+fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'REGION', 'USER']        #Nomes das colunas
+filename = "recommend-ipaddress-" + arquivoCSVNome         #Nome do arquivo
+with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile, delimiter=';') 
+    csvwriter.writerow(fields)
+    csvwriter.writerows(ipResult)
+
+#Ação de exclusão e registro em log
 for i in ipResult:
     
     data = str(i)[1:-1]
@@ -94,14 +103,6 @@ for i in ipResult:
                         level = logging.ERROR)
         logger = logging.getLogger()
         logger.error("Failed', " + data)  
-
-#Passar todos os discos a serem excluídos para um arquivo .csv
-fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'REGION', 'USER']        #Nomes das colunas
-filename = "recommend-ipaddress-" + arquivoCSVNome         #Nome do arquivo
-with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
-    csvwriter = csv.writer(csvfile, delimiter=';') 
-    csvwriter.writerow(fields)
-    csvwriter.writerows(ipResult)
 
 #Mensagem final de realizado com sucesso!
 print("Log and CSV scraping... DONE, check: " + arquivoLOGNome + "and " + arquivoCSVNome)

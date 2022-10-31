@@ -20,7 +20,7 @@ diasValidos = dataAtual - datetime.timedelta(days=7)
 regraData = diasValidos.strftime("%Y-%m-%dT%H:%M:%S.000-07:00")
 
 #Iniciar nome e formato do arquivo log
-arquivoLOGNome = "deleted-snapshots-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
+arquivoLOGNome = "deleted-disks-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
 log_format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}"
 
 #Colocar a data atual no nome do arquivo csv que será gerado
@@ -70,6 +70,15 @@ for v in value:
 #Discos validados para exclusão são concatenados
         diskResult.append(diskDelete)
 
+#Passar todos os discos a serem excluídos para um arquivo .csv
+fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'ZONE', 'SIZE_GB']     #Nomes das colunas
+filename = "deleted-disks-" + arquivoCSVNome     #Nome do arquivo
+with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile, delimiter=';') 
+    csvwriter.writerow(fields)
+    csvwriter.writerows(diskResult)
+
+#Ação de exclusão e registro em log
 for d in diskResult:
     
     data = str(d)[1:-1]
@@ -95,14 +104,6 @@ for d in diskResult:
 
         logger = logging.getLogger()
         logger.error("Failed', " + data) 
-
-#Passar todos os discos a serem excluídos para um arquivo .csv
-fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'ZONE', 'SIZE_GB']     #Nomes das colunas
-filename = "deleted-disks-" + arquivoCSVNome     #Nome do arquivo
-with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
-    csvwriter = csv.writer(csvfile, delimiter=';') 
-    csvwriter.writerow(fields)
-    csvwriter.writerows(diskResult)
 
 #Mensagem final de realizado com sucesso!
 print("Log and CSV scraping... DONE, check: " + arquivoLOGNome + "and " + arquivoCSVNome)

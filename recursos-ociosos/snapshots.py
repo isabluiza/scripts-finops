@@ -38,7 +38,7 @@ for p in parent:
 #Armazenar o ID de cada projeto
         projectId = p["projectId"]
 
-#Listar os discos de cada projeto em formato JSON
+#Listar os snapshots de cada projeto em formato JSON
         comando2 = f"gcloud compute snapshots list --project={projectId} --format=json"
         snapshots = json.loads(check_output(shlex.split(comando2),shell=True))
 
@@ -70,6 +70,15 @@ for v in value:
 #Snapshots validados para exclusão são concatenados
         snapResult.append(snapDelete)
 
+#Passar todos os snapshots a serem excluídos para um arquivo .csv
+fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'STORAGE_BYTES']       #Nomes das colunas
+filename = "recommend-snapshots-" + arquivoCSVNome         #Nome do arquivo
+with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile, delimiter=';') 
+    csvwriter.writerow(fields)
+    csvwriter.writerows(snapResult)
+
+#Ação de exclusão e registro em log
 for s in snapResult:
     
     data = str(s)[1:-1]
@@ -94,14 +103,6 @@ for s in snapResult:
                         level = logging.ERROR)
         logger = logging.getLogger()
         logger.error("Failed', " + data)  
-
-#Passar todos os snapshots excluídos para um arquivo .csv
-fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'STORAGE_BYTES']       #Nomes das colunas
-filename = "recommend-snapshots-" + arquivoCSVNome         #Nome do arquivo
-with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
-    csvwriter = csv.writer(csvfile, delimiter=';') 
-    csvwriter.writerow(fields)
-    csvwriter.writerows(snapResult)
 
 #Mensagem final de realizado com sucesso!
 print("Log and CSV scraping... DONE, check: " + arquivoLOGNome + "and " + arquivoCSVNome)

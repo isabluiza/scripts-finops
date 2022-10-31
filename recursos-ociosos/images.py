@@ -70,6 +70,15 @@ for v in value:
 #Imagens validadas para exclusão são concatenadas
         imgResult.append(imgDelete)
 
+#Passar todas as imagens a serem excluídas para um arquivo .csv
+fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'ARCHIVE_SIZE']        #Nomes das colunas
+filename = "deleted-images-" + arquivoCSVNome        #Nome do arquivo
+with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile, delimiter=';') 
+    csvwriter.writerow(fields)
+    csvwriter.writerows(imgResult)
+
+#Ação de exclusão e registro em log
 for i in imgResult:
     
     data = str(i)[1:-1]
@@ -95,14 +104,6 @@ for i in imgResult:
 
         logger = logging.getLogger()
         logger.error("Failed', " + data)  
-
-#Passar todas as imagens excluídas para um arquivo .csv
-fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'ARCHIVE_SIZE']        #Nomes das colunas
-filename = "deleted-images-" + arquivoCSVNome        #Nome do arquivo
-with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
-    csvwriter = csv.writer(csvfile, delimiter=';') 
-    csvwriter.writerow(fields)
-    csvwriter.writerows(imgResult)
 
 #Mensagem final de realizado com sucesso!
 print("Log and CSV scraping... DONE, check: " + arquivoLOGNome + "and " + arquivoCSVNome)
