@@ -105,4 +105,4 @@ with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
     csvwriter.writerows(diskResult)
 
 #Mensagem final de realizado com sucesso!
-print("Recommend scraping... DONE, check: " + filename)
+print("Log and CSV scraping... DONE, check: " + arquivoLOGNome + "and " + arquivoCSVNome)
