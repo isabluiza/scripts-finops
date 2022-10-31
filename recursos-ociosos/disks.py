@@ -84,9 +84,10 @@ for d in diskResult:
     data = str(d)[1:-1]
     name = d["name"]
     projectId = d["projectId"]
+    zone = d["zone"]
 
     try:
-        comando3 = f"gcloud compute disks delete {name} --project={projectId} --quiet"
+        comando3 = f"gcloud compute disks delete {name} --zone={zone} --project={projectId} --quiet"
         delete_disks = check_output(shlex.split(comando3),shell=True)
 
         logging.basicConfig(filename = arquivoLOGNome,
