@@ -8,7 +8,9 @@ import csv
 #Iniciar as variáveis que serão utilizadas
 parent = ["1",   #ID dos parents
 "2",             
-"3"]             
+"3"]      
+
+# Arrays utilizados nas etapas seguintes, não precisam ser preenchidos
 value = []
 diasDelete = []
 imgDelete = []
@@ -73,7 +75,7 @@ for v in value:
 #Passar todas as imagens a serem excluídas para um arquivo .csv
 fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'ARCHIVE_SIZE']        #Nomes das colunas
 filename = "deleted-images-" + arquivoCSVNome        #Nome do arquivo
-with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+with open("/caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=';') 
     csvwriter.writerow(fields)
     csvwriter.writerows(imgResult)

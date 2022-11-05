@@ -6,9 +6,11 @@ import logging
 import csv
 
 #Iniciar as variáveis que serão utilizadas
-parent = ["744421660312",   #ID de dev
-"893525270595",             #ID de homolog
-"105926244922"]             #ID de prod
+parent = ["1",   #ID de dev
+"2",             #ID de homolog
+"3"]             #ID de prod
+
+# Arrays utilizados nas etapas seguintes, não precisam ser preenchidos
 value = []
 diasDelete = []
 ipDelete = []
@@ -73,7 +75,7 @@ for v in value:
 #Passar todos os endereços de ip a serem excluídos para um arquivo .csv
 fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'REGION', 'USER']        #Nomes das colunas
 filename = "recommend-ipaddress-" + arquivoCSVNome         #Nome do arquivo
-with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+with open("/caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=';') 
     csvwriter.writerow(fields)
     csvwriter.writerows(ipResult)

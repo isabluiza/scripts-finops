@@ -9,6 +9,8 @@ import csv
 parent = ["1",   #ID dos parents
 "2",             
 "3"]     
+
+# Arrays utilizados nas etapas seguintes, não precisam ser preenchidos
 value = []
 diasDelete = []
 snapDelete = []
@@ -73,7 +75,7 @@ for v in value:
 #Passar todos os snapshots a serem excluídos para um arquivo .csv
 fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'STORAGE_BYTES']       #Nomes das colunas
 filename = "recommend-snapshots-" + arquivoCSVNome         #Nome do arquivo
-with open("caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+with open("/caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=';') 
     csvwriter.writerow(fields)
     csvwriter.writerows(snapResult)
