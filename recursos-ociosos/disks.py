@@ -13,8 +13,8 @@ parent = ["1",   #ID dos parents
 # Arrays utilizados nas etapas seguintes, não precisam ser preenchidos
 value = []
 diasDelete = []
-diskDelete = []
-diskResult = []
+diskDeleteLog = []
+diskDeleteCsv = []
 
 #Iniciar a função de dia atual em uma variável
 dataAtual = datetime.datetime.now()
@@ -22,11 +22,10 @@ diasValidos = dataAtual - datetime.timedelta(days=7)
 regraData = diasValidos.strftime("%Y-%m-%dT%H:%M:%S.000-07:00")
 
 #Iniciar nome e formato do arquivo log
-arquivoLOGNome = "deleted-disks-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
-log_format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}"
+arquivoNomeLog = "deleted-disks-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
 
 #Colocar a data atual no nome do arquivo csv que será gerado
-arquivoCSVNome = dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss")+".csv"
+arquivoNomeCsv = "deleted-disks-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".csv"
 
 #Listar todos os projetos de dev, homolog e prod
 for p in parent:
@@ -60,28 +59,28 @@ for p in parent:
             except (KeyError):
                 sizeGb = 0
 
-#Concatenar informações em única variável value
-            value.append([parentId, projectId, name, creationTimestamp, zone, sizeGb])
+            try:
+                users = d["users"]
+            except (KeyError):
+                users = 0
 
 #Validar regra de data
-for v in value:
-
-    if v[3] <= regraData:
-        diskDelete = v
+            if creationTimestamp <= regraData:
 
 #Discos validados para exclusão são concatenados
-        diskResult.append(diskDelete)
+                diskDeleteCsv.append([parentId, projectId, name, creationTimestamp, zone, sizeGb, users])
+
+                diskDeleteLog.append({"parentId": parentId, "projectId": projectId, "name": name, "creationTimestamp": creationTimestamp, "location": zone, "sizeGb": sizeGb, "users": users})
 
 #Passar todos os discos a serem excluídos para um arquivo .csv
-fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'ZONE', 'SIZE_GB']     #Nomes das colunas
-filename = "deleted-disks-" + arquivoCSVNome     #Nome do arquivo
-with open("/caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'SIZE_GB', 'USERS']     #Nomes das colunas
+with open("/caminho/da/pasta/" + arquivoNomeCsv, 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=';') 
     csvwriter.writerow(fields)
-    csvwriter.writerows(diskResult)
+    csvwriter.writerows(diskDeleteCsv)
 
 #Ação de exclusão e registro em log
-for d in diskResult:
+for d in diskDeleteLog:
     
     data = str(d)[1:-1]
     name = d["name"]
@@ -92,21 +91,22 @@ for d in diskResult:
         comando3 = f"gcloud compute disks delete {name} --zone={zone} --project={projectId} --quiet"
         delete_disks = check_output(shlex.split(comando3),shell=True)
 
-        logging.basicConfig(filename = arquivoLOGNome,
-                    filemode = "w",
-                    format = log_format, 
-                    level = logging.INFO)
+        logging.basicConfig(filename = arquivoNomeLog,
+                            filemode = "w",
+                            format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}",
+                            datefmt='%Y-%m-%dT%Hh%Mmin%Ss',  
+                            level = logging.INFO)
         logger = logging.getLogger()
         logger.info("Deleted', " + data)
 
     except:
-        logging.basicConfig(filename = arquivoLOGNome,
-                        filemode = "w",
-                        format = log_format, 
-                        level = logging.ERROR)
-
+        logging.basicConfig(filename = arquivoNomeLog,
+                            filemode = "w",
+                            format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}",
+                            datefmt='%Y-%m-%dT%Hh%Mmin%Ss', 
+                            level = logging.ERROR)
         logger = logging.getLogger()
-        logger.error("Failed', " + data) 
+        logger.error("Failed', " + data)  
 
 #Mensagem final de realizado com sucesso!
-print("Log and CSV scraping... DONE, check: " + arquivoLOGNome + "and " + arquivoCSVNome)
+print("Log and CSV scraping... DONE, check: " + arquivoNomeLog + "and " + arquivoNomeCsv)

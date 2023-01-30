@@ -13,8 +13,8 @@ parent = ["1",   #ID dos parents
 # Arrays utilizados nas etapas seguintes, não precisam ser preenchidos
 value = []
 diasDelete = []
-imgDelete = []
-imgResult = []
+imgDeleteLog = []
+imgDeleteCsv = []
 
 #Iniciar a função de dia atual em uma variável
 dataAtual = datetime.datetime.now()
@@ -22,11 +22,10 @@ diasValidos = dataAtual - datetime.timedelta(days=7)
 regraData = diasValidos.strftime("%Y-%m-%dT%H:%M:%S.000-07:00")
 
 #Iniciar nome e formato do arquivo log
-arquivoLOGNome = "deleted-images-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
-log_format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}"
+arquivoNomeLog = "deleted-images-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
 
 #Iniciar nome do arquivo
-arquivoCSVNome = dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss")+".csv"
+arquivoNomeCsv = "deleted-images-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".csv"
 
 #Listar todos os projetos
 for p in parent:
@@ -56,32 +55,29 @@ for p in parent:
                 location = 0
 
             try:
-                archiveSize = i["archiveSizeBytes"]
+                archiveSize = int(i["archiveSizeBytes"])
             except (KeyError):
                 archiveSize = 0
 
-#Concatenar informações em única variável value
-            value.append([parentId, projectId, name, creationTimestamp, location, archiveSize])
+            sizeGb = float("{:.2f}".format(archiveSize/(1024 ** 3)))
 
 #Validar regra de data
-for v in value:
-
-    if v[3] <= regraData:
-        imgDelete = v
+            if creationTimestamp <= regraData:
 
 #Imagens validadas para exclusão são concatenadas
-        imgResult.append(imgDelete)
+                imgDeleteCsv.append([parentId, projectId, name, creationTimestamp, location, sizeGb])
+
+                imgDeleteLog.append({"parentId": parentId, "projectId": projectId, "name": name, "creationTimestamp": creationTimestamp, "location": location, "sizeGb": sizeGb})
 
 #Passar todas as imagens a serem excluídas para um arquivo .csv
-fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'ARCHIVE_SIZE']        #Nomes das colunas
-filename = "deleted-images-" + arquivoCSVNome        #Nome do arquivo
-with open("/caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'SIZE_GB']        #Nomes das colunas
+with open("/caminho/da/pasta/" + arquivoNomeCsv, 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=';') 
     csvwriter.writerow(fields)
-    csvwriter.writerows(imgResult)
+    csvwriter.writerows(imgDeleteCsv)
 
 #Ação de exclusão e registro em log
-for i in imgResult:
+for i in imgDeleteLog:
     
     data = str(i)[1:-1]
     name = i["name"]
@@ -91,21 +87,22 @@ for i in imgResult:
         comando3 = f"gcloud compute images delete {name} --project={projectId} --quiet"
         delete_images = check_output(shlex.split(comando3),shell=True)
 
-        logging.basicConfig(filename = arquivoLOGNome,
-                    filemode = "w",
-                    format = log_format, 
-                    level = logging.INFO)
+        logging.basicConfig(filename = arquivoNomeLog,
+                            filemode = "w",
+                            format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}",
+                            datefmt='%Y-%m-%dT%Hh%Mmin%Ss',  
+                            level = logging.INFO)
         logger = logging.getLogger()
         logger.info("Deleted', " + data)
 
     except:
-        logging.basicConfig(filename = arquivoLOGNome,
-                        filemode = "w",
-                        format = log_format, 
-                        level = logging.ERROR)
-
+        logging.basicConfig(filename = arquivoNomeLog,
+                            filemode = "w",
+                            format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}",
+                            datefmt='%Y-%m-%dT%Hh%Mmin%Ss', 
+                            level = logging.ERROR)
         logger = logging.getLogger()
         logger.error("Failed', " + data)  
 
 #Mensagem final de realizado com sucesso!
-print("Log and CSV scraping... DONE, check: " + arquivoLOGNome + "and " + arquivoCSVNome)
+print("Log and CSV scraping... DONE, check: " + arquivoNomeLog + "and " + arquivoNomeCsv)

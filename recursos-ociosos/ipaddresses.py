@@ -13,8 +13,8 @@ parent = ["1",   #ID de dev
 # Arrays utilizados nas etapas seguintes, não precisam ser preenchidos
 value = []
 diasDelete = []
-ipDelete = []
-ipResult = []
+ipDeleteLog = []
+ipDeleteCsv = []
 
 #Iniciar a função de dia atual em uma variável
 dataAtual = datetime.datetime.now()
@@ -22,11 +22,10 @@ diasValidos = dataAtual - datetime.timedelta(days=7)
 regraData = diasValidos.strftime("%Y-%m-%dT%H:%M:%S.000-07:00")
 
 #Iniciar nome e formato do arquivo log
-arquivoLOGNome = "deleted-ipaddress-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
-log_format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}"
+arquivoNomeLog = "deleted-ipaddresses-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".log"
 
 #Colocar a data atual no nome do arquivo csv que será gerado
-arquivoCSVNome = dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss")+".csv"
+arquivoNomeCsv = "deleted-ipaddresses-" + dataAtual.strftime("%Y-%m-%dT%Hh%Mmin%Ss") + ".csv"
 
 #Listar todos os projetos de dev, homolog e prod
 for p in parent:
@@ -42,10 +41,10 @@ for p in parent:
 
 #Listar os endereços de ip de cada projeto em formato JSON
         comando2 = f'gcloud compute addresses list --project={projectId} --format=json'
-        ipaddress = json.loads(check_output(shlex.split(comando2),shell=True))
+        ipaddresses = json.loads(check_output(shlex.split(comando2),shell=True))
 
 #Armazenar nome, data de criação, zona e usuário de cada endereço de IP listado
-        for i in ipaddress:
+        for i in ipaddresses:
 
             name = i["name"]
             creationTimestamp = i["creationTimestamp"]
@@ -60,28 +59,24 @@ for p in parent:
             except (KeyError):
                 users = 0
 
-#Concatenar informações em única variável value
-            value.append([parentId, projectId, name, creationTimestamp, region, users])
-
 #Validar regra de data e se o campo "user" está vazio
-for v in value:
-
-    if (v[3] <= regraData) and (v[5] == 0):
-        ipDelete = v
+            if (creationTimestamp <= regraData) and (users == 0):
 
 #Endereços de IP validados para exclusão são concatenados
-        ipResult.append(ipDelete)
+                ipDeleteCsv.append([parentId, projectId, name, creationTimestamp, region, users])
+
+                ipDeleteLog.append({"parentId": parentId, "projectId": projectId, "name": name, "creationTimestamp": creationTimestamp, "location": region, "sizeGb": None, "users": users})
 
 #Passar todos os endereços de ip a serem excluídos para um arquivo .csv
-fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'REGION', 'USER']        #Nomes das colunas
-filename = "recommend-ipaddress-" + arquivoCSVNome         #Nome do arquivo
-with open("/caminho/da/pasta/" + filename, 'w', newline='') as csvfile:
+fields = ['PARENT', 'PROJECT', 'NAME', 'CREATION_TIMESTAMP', 'LOCATION', 'USER']        #Nomes das colunas
+with open("/caminho/da/pasta/" + arquivoNomeCsv, 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=';') 
     csvwriter.writerow(fields)
-    csvwriter.writerows(ipResult)
+    csvwriter.writerows(ipDeleteCsv)
+
 
 #Ação de exclusão e registro em log
-for i in ipResult:
+for i in ipDeleteLog:
     
     data = str(i)[1:-1]
     name = i["name"]
@@ -92,20 +87,22 @@ for i in ipResult:
         comando3 = f"gcloud compute addresses delete {name} --region={region} --project={projectId} --quiet"
         delete_ip = check_output(shlex.split(comando3),shell=True)
 
-        logging.basicConfig(filename = arquivoLOGNome,
-                    filemode = "w",
-                    format = log_format, 
-                    level = logging.INFO)
+        logging.basicConfig(filename = arquivoNomeLog,
+                            filemode = "w",
+                            format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}",
+                            datefmt='%Y-%m-%dT%Hh%Mmin%Ss',  
+                            level = logging.INFO)
         logger = logging.getLogger()
         logger.info("Deleted', " + data)
 
     except:
-        logging.basicConfig(filename = arquivoLOGNome,
-                        filemode = "w",
-                        format = log_format, 
-                        level = logging.ERROR)
+        logging.basicConfig(filename = arquivoNomeLog,
+                            filemode = "w",
+                            format = "{'level': '%(levelname)s', 'timestamp': '%(asctime)s', 'status': '%(message)s}",
+                            datefmt='%Y-%m-%dT%Hh%Mmin%Ss',
+                            level = logging.ERROR)
         logger = logging.getLogger()
         logger.error("Failed', " + data)  
 
 #Mensagem final de realizado com sucesso!
-print("Log and CSV scraping... DONE, check: " + arquivoLOGNome + "and " + arquivoCSVNome)
+print("Log and CSV scraping... DONE, check: " + arquivoNomeLog + "and " + arquivoNomeCsv)
